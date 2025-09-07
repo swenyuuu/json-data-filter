@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>店家查詢系統｜進階版（Learning Record）</title>
+
+    <!--
+      ────────────────────────────────────────────────────────────────────────
+      Stylesheet
+      - 清楚分區：變數、重置、布局、元件、工具
+      - 僅調整排版與可讀性，不改功能與語意
+      ────────────────────────────────────────────────────────────────────────
+    -->
+    <style>
+      /* ========== CSS Variables ========== */
+      :root {
+        --bg: #f8fafb;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --accent: #0ea5e9;
+        --border: #e5e7eb;
+      }
+
+      /* ========== Base Reset ========== */
+      * {
+        box-sizing: border-box;
+      }
+      html, body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        color: var(--text);
+        background: var(--bg);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Noto Sans,
+          "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      /* ========== Layout ========== */
+      .container {
+        max-width: 860px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 6px 0 16px;
+        text-align: center;
+        font-size: 28px;
+      }
+      .lead {
+        margin: 0 0 24px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .panel {
+        padding: 16px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.04);
+      }
+
+      /* Controls */
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 2fr auto auto;
+        align-items: center;
+        gap: 12px;
+      }
+      @media (max-width: 720px) {
+        .controls {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      select,
+      input[type="text"] {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 16px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        outline: none;
+      }
+      button {
+        padding: 10px 14px;
+        font-weight: 600;
+        color: var(--text);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        appearance: none;
+      }
+      button.primary {
+        color: #fff;
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Results */
+      .result-panel {
+        margin-top: 16px;
+      }
+      .summary {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .card {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 10px;
+        padding: 12px 14px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+      .title {
+        font-weight: 700;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+      .tag {
+        padding: 4px 8px;
+        color: #0369a1;
+        background: #eef6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+      .actions {
+        margin-top: 4px;
+      }
+      .actions a {
+        color: var(--accent);
+        font-size: 14px;
+        text-decoration: none;
+      }
+      .empty {
+        padding: 24px 0;
+        color: var(--muted);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>店家查詢系統（進階版）</h1>
+      <p class="lead">
+        示範：從外部 JSON 讀取資料 → 前端篩選 → 動態顯示。無後端，僅作學習展示。
+      </p>
+
+      <section class="panel" aria-label="查詢面板">
+        <!--
+          Controls 區：
+          - district：區域下拉
+          - keyword：店名關鍵字
+          - search/reset：操作按鈕
+        -->
+        <div class="controls">
+          <select id="district" aria-label="選擇區域">
+            <option value="">選擇區域（可留空）</option>
+            <option>中區</option>
+            <option>東區</option>
+            <option>南區</option>
+            <option>西區</option>
+            <option>北區</option>
+            <option>北屯區</option>
+            <option>西屯區</option>
+            <option>南屯區</option>
+            <option>太平區</option>
+            <option>大里區</option>
+            <option>霧峰區</option>
+            <option>烏日區</option>
+            <option>豐原區</option>
+            <option>后里區</option>
+            <option>石岡區</option>
+            <option>東勢區</option>
+            <option>和平區</option>
+            <option>新社區</option>
+            <option>潭子區</option>
+            <option>大雅區</option>
+            <option>神岡區</option>
+            <option>大肚區</option>
+            <option>沙鹿區</option>
+            <option>龍井區</option>
+            <option>梧棲區</option>
+            <option>清水區</option>
+            <option>大甲區</option>
+            <option>外埔區</option>
+            <option>大安區</option>
+          </select>
+
+          <input
+            id="keyword"
+            type="text"
+            placeholder="輸入店名關鍵字（可留空）"
+            aria-label="輸入店名關鍵字"
+          />
+
+          <button id="search" class="primary" aria-label="搜尋">搜尋</button>
+          <button id="reset" aria-label="清空搜尋條件">清空</button>
+        </div>
+
+        <div class="result-panel">
+          <p id="summary" class="summary">請選擇區域或輸入關鍵字後搜尋。</p>
+          <ul id="list" class="list"></ul>
+          <div id="empty" class="empty" style="display: none">沒有找到符合條件的店家。</div>
+        </div>
+      </section>
+    </div>
+
+    <!--
+      ────────────────────────────────────────────────────────────────────────
+      Script
+      - 採用 IIFE 封裝，避免全域汙染
+      - 嚴格模式、常數上方集中定義
+      - 按功能分組：常數與工具 → 正規化 → Render → 狀態與流程
+      ────────────────────────────────────────────────────────────────────────
+    -->
+    <script>
+      (function () {
+        'use strict';
+
+        /* ================= Constants ================= */
+        // 資料來源
+        const REQUEST_URL =
+          './restaurants.json';
+
+        // DOM refs
+        const els = {
+          district: document.getElementById('district'),
+          keyword: document.getElementById('keyword'),
+          search: document.getElementById('search'),
+          reset: document.getElementById('reset'),
+          list: document.getElementById('list'),
+          empty: document.getElementById('empty'),
+          summary: document.getElementById('summary')
+        };
+
+        /* ================= Utilities ================= */
+        const streets = [
+          '中山路',
+          '中正路',
+          '民權路',
+          '民生路',
+          '自由路',
+          '文化路',
+          '復興路',
+          '文華路',
+          '台中路',
+          '光明路'
+        ];
+
+        /**
+         * 產生簡單 hash 值（僅作 mock 用途）
+         * @param {string} str
+         * @returns {number}
+         */
+        function hash(str) {
+          let h = 0;
+          for (let i = 0; i < str.length; i++) {
+            h = (h << 5) - h + str.charCodeAt(i);
+            h |= 0; // 32-bit
+          }
+          return Math.abs(h);
+        }
+
+        /** 依據 seed 產生 09xxxxxxxx 格式的電話 */
+        function mockPhone(seed) {
+          const h = hash(String(seed));
+          const num = String(h % 10 ** 8).padStart(8, '0');
+          return `09${num}`;
+        }
+
+        /** 依據 seed 產生地址 */
+        function mockAddress(seed, district) {
+          const h = hash(String(seed));
+          const street = streets[h % streets.length];
+          const no = (h % 300) + 1;
+          return `${district || '台中市'}${street}${no}號`;
+        }
+
+        /* ================= Normalization ================= */
+        /**
+         * 將原始資料欄位標準化為統一結構
+         * @param {any} item
+         * @returns {{id: string|number, name: string, district: string, phone: string, address: string}}
+         */
+        function normalize(item) {
+          const name = (item.攤名 && String(item.攤名).trim()) || item.name || '未命名店家';
+          const district = (item.區域 && String(item.區域).trim()) || item.district || '';
+          const phone =
+            (item.電話 && String(item.電話).trim()) || mockPhone(item.編號 || name);
+          const address =
+            (item.地址 && String(item.地址).trim()) ||
+            mockAddress(item.編號 || name, district);
+          const id = item.編號 || item.id || '';
+          return { id, name, district, phone, address };
+        }
+
+        /* ================= Renderers ================= */
+        /** 卡片模板 */
+        function toCard(record) {
+          const mapUrl = `https://www.google.com/maps/search/${encodeURIComponent(
+            record.name + ' ' + record.address
+          )}`;
+          return (
+            '<li class="card">' +
+            `  <div class="row"><span class="title">${record.name}</span><span class="tag">${
+              record.district || '未分類'
+            }</span></div>` +
+            `  <div class="meta">電話：<a href="tel:${record.phone}">${record.phone}</a></div>` +
+            `  <div class="meta">地址：${record.address}</div>` +
+            `  <div class="actions"><a href="${mapUrl}" target="_blank" rel="noopener">在 Google 地圖查看</a></div>` +
+            '</li>'
+          );
+        }
+
+        /* ================= State & Flow ================= */
+        /** @type {Array<ReturnType<typeof normalize>>} */
+        let DATA = [];
+
+        async function load() {
+          try {
+            const resp = await fetch(REQUEST_URL);
+            if (!resp.ok) throw new Error('無法載入資料');
+            const json = await resp.json();
+            DATA = Array.isArray(json) ? json.map(normalize) : [];
+            els.summary.textContent = `已載入資料：${DATA.length} 筆。`;
+          } catch (error) {
+            console.error(error);
+            els.summary.textContent = '載入資料失敗，請稍後再試。';
+          }
+        }
+
+        function search() {
+          const d = els.district.value.trim();
+          const k = els.keyword.value.trim();
+
+          let result = DATA;
+          if (d) result = result.filter((r) => r.district === d);
+          if (k) result = result.filter((r) => r.name.includes(k));
+
+          els.list.innerHTML = result.map(toCard).join('');
+          els.empty.style.display = result.length ? 'none' : 'block';
+
+          const cond = [
+            d ? `區域：${d}` : null,
+            k ? `關鍵字：「${k}」` : null
+          ]
+            .filter(Boolean)
+            .join('，');
+          els.summary.textContent = cond
+            ? `目前條件（${cond}），共 ${result.length} 筆。`
+            : '請選擇區域或輸入關鍵字後搜尋。';
+        }
+
+        function reset() {
+          els.district.value = '';
+          els.keyword.value = '';
+          els.list.innerHTML = '';
+          els.empty.style.display = 'none';
+          els.summary.textContent = '請選擇區域或輸入關鍵字後搜尋。';
+        }
+
+        // Bindings
+        els.search.addEventListener('click', search);
+        els.reset.addEventListener('click', reset);
+
+        // Entry
+        load();
+      })();
+    </script>
+  </body>
+</html>
